@@ -1,3 +1,44 @@
+/**
+*	Name:  Andrew McGuiness
+*	Date:    3/25/2018
+*	Course: ITEC360-01 Project 1
+*
+*	Purpose: This program operates on a collection of 2D points and will determine
+*		the closest pair.  The program has two algorithms to calculate the closest pair,
+*		one Brute Force and one Divide and Conquer.  The Divide and Conquer relies
+*		on the points being sorted, to do this, I have implemented two version of a merge
+*		sort, one to sort by x and one to sort by y.
+*
+*		The program and either take an argument for which algorithm to use or will ask
+*		the user.  Points are supplied as ints and should be given as pairs.
+*
+*	Sample Input:
+*		>closest brute
+*		Enter point count: 8
+*		1 1
+*		2 2
+*		3 3
+*		4 4
+*		5 5
+*		6 6
+*		 7 7
+*		8 9
+*		
+*	Expected output:
+*		Algorithm: Brute Force
+*		
+*		N: 8
+*		
+*		Point 1: (1, 1)
+*		Point 2: (2, 2)
+*		
+*		Distance squared: 1
+*		
+*		Distance: 1
+*		
+*		Number of distance calcs: 28
+*		
+*/
 #include <iostream>
 #include <string>
 #include <vector>
@@ -87,173 +128,168 @@ double bruteForceClosestPair( vector<Point>& points, pair<Point, Point>& closest
 	return dist;
 }
 
-
 // Q SORTING
 /**
- *	@brief		Merge the points from B and C back into A sorted.
+ *	@brief		Merge the points back together based on their y value
  *	
- *	@param B	left vector of sorted points
- *	@param C	right vector of sorted points
- *	@param A	vector to merge the two halves into.
+ *	@param l	left index in the vector
+ *	@param m	middle index in the vector
+ *	@param r	right index in the vector
  *	
  *	@return Void.
  */
-void merge(vector<pair<Point, Point*>>& B, vector<pair<Point, Point*>>& C, vector<pair<Point, Point*>>& A)
+void merge(vector<pair<Point, Point*>>& points, int l, int m, int r)
 {
-	int p = B.size();
-	int q = C.size();
+	int i, j, k;
+	int n1 = m - l + 1;
+	int n2 = r - m;
 
-	int i = 0;
-	int j = 0;
-	int k = 0;
+	// Create temp storage and copy the unmerged points into it
+	vector<pair<Point, Point*>> L, R;
+	for(i = 0; i < n1; i++)
+		L.push_back(points[l+i]);
+	for(j = 0; j < n2; j++)
+		R.push_back(points[m + 1 + j]);
 
-	// Merge B and C into A until one vector is empty
-	while( i < p && j < q )
-	{
-		if(B[i].first.y <= C[j].first.y)
-		{
-			A[k] = B[i];
-			i++;
-		}
-		else
-		{
-			A[k] = C[j];
-			j++;
-		}
-		k++;
-	}
+	i = 0;
+    j = 0;
+    k = l;
 
-	// Merge back remaining points
-	if( i == p)
-	{
-		while (j < q)
-		{
-			A[k] = C[j];
-			j++;
-			k++;
-		}
-	}
-	else
-	{
-		while (i < p)
-		{
-			A[k] = B[i];
-			i++;
-			k++;
-		}
-	}    
+	// Merge the points of L and R back into points
+    while (i < n1 && j < n2)
+    {
+        if (L[i].first.y <= R[j].first.y)
+        {
+            points[k] = L[i];
+            i++;
+        }
+        else
+        {
+            points[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+
+	// L has remaining points, merge them
+    while (i < n1)
+    {
+        points[k] = L[i];
+        i++;
+        k++;
+    }
+
+	// R has remaining points, merge them
+    while (j < n2)
+    {
+        points[k] = R[j];
+        j++;
+        k++;
+    }
 }
 
 /**
- *	@brief	Mergesort the points inside A in order of their Y coordinate
+ *	@brief	Mergesort the point inside points between l and r based on their y value.
  *	
- *	@param A	vector of points to sort.
+ *	@param points	vector of points to sort
+ *	@param l		left bound of the sort
+ *	@param r		right bound of the sort
  *	
  *	@return Void.
  */
-void merge_sort(vector<pair<Point, Point*>>& A)
+void mergeSort(vector<pair<Point, Point*>>& points, int l, int r)
 {
-	if(A.size() > 1)
+	if(l < r)
 	{
-		// Copy left and right points of A into B and C
-		vector<pair<Point, Point*>> B, C;
-		for(int i = 0; i < A.size()/2; i++)
-			B.push_back(A[i]);
+		int mid = l+(r-l)/2;
 
-		for(int j = A.size()/2; j < A.size(); j++)
-			C.push_back(A[j]);
+		mergeSort(points, l, mid);
+		mergeSort(points, mid+1, r);
 
-		// sort each half
-		merge_sort(B);
-		merge_sort(C);
-
-		// merge all back into A
-		merge(B, C, A);
+		merge(points, l, mid, r);
 	}
 }
 
 
 // P SORTING
 /**
- *	@brief		Merge the points from B and C back into A sorted.
+ *	@brief		Merge the points back together based on their x value
  *	
- *	@param B	left vector of sorted points
- *	@param C	right vector of sorted points
- *	@param A	vector to merge the two halves into.
+ *	@param l	left index in the vector
+ *	@param m	middle index in the vector
+ *	@param r	right index in the vector
  *	
  *	@return Void.
  */
-void merge(vector<Point>& B, vector<Point>& C, vector<Point>& A)
+void merge(vector<Point>& points, int l, int m, int r)
 {
-	int p = B.size();
-	int q = C.size();
+	int i, j, k;
+	int n1 = m - l + 1;
+	int n2 = r - m;
 
-	int i = 0;
-	int j = 0;
-	int k = 0;
+	// Copy the points inside of our bounds into L and R
+	vector<Point> L, R;
+	for(i = 0; i < n1; i++)
+		L.push_back(points[l+i]);
+	for(j = 0; j < n2; j++)
+		R.push_back(points[m + 1 + j]);
 
-	// Merge B and C into A until one vector is empty
-	while( i < p && j < q )
-	{
-		if(B[i].x <= C[j].x)
-		{
-			A[k] = B[i];
-			i++;
-		}
-		else
-		{
-			A[k] = C[j];
-			j++;
-		}
-		k++;
-	}
+	i = 0;
+    j = 0;
+    k = l;
 
-	// Merge remaining points into A
-	if( i == p)
-	{
-		while (j < q)
-		{
-			A[k] = C[j];
-			j++;
-			k++;
-		}
-	}
-	else
-	{
-		while (i < p)
-		{
-			A[k] = B[i];
-			i++;
-			k++;
-		}
-	}    
+	// Merge the points of L and R back into points based on their x value
+    while (i < n1 && j < n2)
+    {
+        if (L[i].x <= R[j].x)
+        {
+            points[k] = L[i];
+            i++;
+        }
+        else
+        {
+            points[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+
+	// Points remain in L, copy them
+    while (i < n1)
+    {
+        points[k] = L[i];
+        i++;
+        k++;
+    }
+
+	// Points remain in R, copy them
+    while (j < n2)
+    {
+        points[k] = R[j];
+        j++;
+        k++;
+    }
 }
 
 /**
- *	@brief	Mergesort the points inside A in order of their X coordinate
+ *	@brief	Mergesort the point inside points between l and r based on their x value.
  *	
- *	@param A	vector of points to sort.
+ *	@param points	vector of points to sort
+ *	@param l		left bound of the sort
+ *	@param r		right bound of the sort
  *	
  *	@return Void.
  */
-void merge_sort(vector<Point>& A)
+void mergeSort(vector<Point>& points, int l, int r)
 {
-	if(A.size() > 1)
+	if(l < r)
 	{
-		// Copy out left and right of A into B and C
-		vector<Point> B, C;
-		for(int i = 0; i < A.size()/2; i++)
-			B.push_back(A[i]);
+		int mid = l+(r-l)/2;
 
-		for(int j = A.size()/2; j < A.size(); j++)
-			C.push_back(A[j]);
+		mergeSort(points, l, mid);
+		mergeSort(points, mid+1, r);
 
-		// Sort each half
-		merge_sort(B);
-		merge_sort(C);
-
-		// Merge both into A
-		merge(B, C, A);
+		merge(points, l, mid, r);
 	}
 }
 
@@ -387,7 +423,7 @@ double divideClosestPoint( vector<Point>& points, pair<Point, Point>& closestPai
 {
 	//copy points into P and sort by X
 	vector< Point> P = points;
-	merge_sort(P);
+	mergeSort(P, 0, P.size()-1);
 
 	
 	//copy points from P into Q with a pointer to the value in P
@@ -396,7 +432,7 @@ double divideClosestPoint( vector<Point>& points, pair<Point, Point>& closestPai
 		Q.emplace_back(P[i], &P[i]);
 
 	//sort Q by Y
-	merge_sort( Q );
+	mergeSort(Q, 0, Q.size()-1);
 	
 
 	// Do the actual search
